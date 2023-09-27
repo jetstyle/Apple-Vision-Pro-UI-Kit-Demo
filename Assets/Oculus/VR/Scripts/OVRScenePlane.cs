@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -203,7 +203,7 @@ public class OVRScenePlane : MonoBehaviour, IOVRSceneComponent
 
             OVRSceneManager.Development.Log(nameof(OVRScenePlane),
                 $"[{_sceneAnchor.Uuid}] Plane has dimensions {Dimensions} " +
-                $"and offset {Offset}.");
+                $"and offset {Offset}.", gameObject);
 
             if (ScaleChildren)
                 SetChildScale();
@@ -213,7 +213,8 @@ public class OVRScenePlane : MonoBehaviour, IOVRSceneComponent
         else
         {
             OVRSceneManager.Development.LogError(nameof(OVRScenePlane),
-                $"[{GetComponent<OVRSceneAnchor>().Uuid}] Failed to retrieve plane's information.");
+                $"[{GetComponent<OVRSceneAnchor>().Uuid}] Failed to retrieve plane's information.",
+                gameObject);
         }
     }
 

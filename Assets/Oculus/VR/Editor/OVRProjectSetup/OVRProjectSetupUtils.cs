@@ -19,7 +19,6 @@
  */
 
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEditor;
@@ -30,30 +29,6 @@ using UnityEngine.SceneManagement;
 
 internal static class OVRProjectSetupUtils
 {
-    private static string _rootPath;
-
-    public static string RootPath
-    {
-        get
-        {
-            if (_rootPath == null)
-            {
-                var g = AssetDatabase.FindAssets($"t:Script {nameof(OVRProjectSetupUtils)}");
-                _rootPath = AssetDatabase.GUIDToAssetPath(g[0]);
-                _rootPath = Path.GetDirectoryName(_rootPath);
-            }
-
-            return _rootPath;
-        }
-    }
-
-    private const string IconsRelativePath = "Icons/";
-
-    public static string BuildIconPath(string path)
-    {
-        return Path.Combine(Path.Combine(RootPath, IconsRelativePath), path);
-    }
-
     public static T FindComponentInScene<T>() where T : Component
     {
         var scene = SceneManager.GetActiveScene();
@@ -105,32 +80,14 @@ internal static class OVRProjectSetupUtils
         return AssetDatabase.LoadAssetAtPath<T>(path);
     }
 
-    public static GUIContent CreateIcon(string name, string tooltip = null, bool builtIn = false)
-    {
-        GUIContent content = null;
-        if (builtIn)
-        {
-            content = EditorGUIUtility.TrIconContent(name, tooltip);
-        }
-        else
-        {
-            var path = BuildIconPath(name);
-            var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            content = new GUIContent
-            {
-                image = texture,
-                tooltip = tooltip
-            };
-        }
 
-        return content;
-    }
 
     private static ListRequest _packageManagerListRequest;
 
     static OVRProjectSetupUtils()
     {
         RefreshPackageList(false);
+        OVRGUIContent.RegisterContentPath(OVRGUIContent.Source.ProjectSetupToolIcons, "OVRProjectSetup/Icons");
     }
 
     public static bool PackageManagerListAvailable => _packageManagerListRequest.Status == StatusCode.Success;

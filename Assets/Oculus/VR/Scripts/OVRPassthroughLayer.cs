@@ -227,12 +227,8 @@ public class OVRPassthroughLayer : MonoBehaviour
         styleDirty = true;
     }
 
-
     /// <summary>
     /// Applies a color LUT to the passthrough layer.
-    /// This is an experimental feature, please see
-    /// https://developer.oculus.com/experimental/experimental-overview/ for more information
-    /// and ensure that Experimental Features are enabled in OVRManager - Quest Features - Experimental.
     /// </summary>
     /// <param name="lut"></param>
     /// <param name="weight"> Value between 0 and 1 which defines the blend between the original Passthrough colors and
@@ -258,8 +254,6 @@ public class OVRPassthroughLayer : MonoBehaviour
 
     /// <summary>
     /// Applies the interpolation between two color LUTs to the passthrough layer.
-    /// This is an experimental feature, please see
-    /// https://developer.oculus.com/experimental/experimental-overview/ for more information.
     /// </summary>
     /// <param name="lutSource"></param>
     /// <param name="lutTarget"></param>

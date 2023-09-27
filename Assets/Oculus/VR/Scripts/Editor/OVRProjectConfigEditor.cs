@@ -148,6 +148,10 @@ public class OVRProjectConfigEditor : Editor
                 OVREditorUtil.SetupEnumField(projectConfig, "Hand Tracking Version",
                     ref projectConfig.handTrackingVersion, ref hasModified);
 
+                // Concurrent hands and controllers support
+                OVREditorUtil.SetupEnumField(projectConfig, new GUIContent("Concurrent Hands/Controllers Support",
+                        "Allows the application to use concurrent hands and controllers functionality. This option must be enabled at build time."),
+                    ref projectConfig.multimodalHandsControllersSupport, ref hasModified);
 
                 // Enable Render Model Support
                 bool renderModelSupportAvailable = OVRPluginInfo.IsOVRPluginOpenXRActivated();
@@ -213,6 +217,10 @@ public class OVRProjectConfigEditor : Editor
                 // Anchor Support - linked to Shared Spatial Anchors and Scene
                 var anchorSupportRequired = projectConfig.sharedAnchorSupport != OVRProjectConfig.FeatureSupport.None;
                 var anchorSupportTooltip = "Anchor Support is required for Shared Spatial Anchor Support.";
+                anchorSupportRequired = anchorSupportRequired ||
+                                        projectConfig.sceneSupport != OVRProjectConfig.FeatureSupport.None;
+                anchorSupportTooltip =
+                    "Anchor Support is required for Shared Spatial Anchor Support and/or Scene Support.";
                 using (new EditorGUI.DisabledScope(anchorSupportRequired))
                 {
                     var tooltip = anchorSupportRequired ? anchorSupportTooltip : "";
@@ -233,6 +241,18 @@ public class OVRProjectConfigEditor : Editor
                 }
 
 
+                // Scene Support
+                var sceneTooltip =
+                    "Enable support for scene understanding. This requires Anchor Support to be enabled.";
+                OVREditorUtil.SetupEnumField(projectConfig, new GUIContent("Scene Support", sceneTooltip),
+                    ref projectConfig.sceneSupport, ref hasModified);
+                // enable anchor support if scene requires it
+                if (projectConfig.sceneSupport != OVRProjectConfig.FeatureSupport.None &&
+                    projectConfig.anchorSupport != OVRProjectConfig.AnchorSupport.Enabled)
+                {
+                    projectConfig.anchorSupport = OVRProjectConfig.AnchorSupport.Enabled;
+                    hasModified = true;
+                }
 
                 // Body Tracking Support
                 OVREditorUtil.SetupEnumField(projectConfig, "Body Tracking Support",

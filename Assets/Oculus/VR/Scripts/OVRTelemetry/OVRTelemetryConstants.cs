@@ -72,6 +72,8 @@ internal static class OVRTelemetryConstants
             public const int OpenWindow = 163062905;
             public const int AddBlock = 163060420;
             public const int RunBlock = 163063912;
+            public const int InstallSDK = 163067801;
+            public const int RemoveSDK = 163067560;
         }
 
         public static class AnnotationType

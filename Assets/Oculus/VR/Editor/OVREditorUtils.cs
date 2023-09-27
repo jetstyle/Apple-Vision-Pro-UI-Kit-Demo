@@ -19,11 +19,21 @@
  */
 
 using System;
-using UnityEditor;
 using UnityEngine;
 
 internal static class OVREditorUtils
 {
+    static OVREditorUtils()
+    {
+        OVRGUIContent.RegisterContentPath(OVRGUIContent.Source.GenericIcons, "Icons");
+
+    }
+
+
+    public static OVRGUIContent CreateContent(string name, OVRGUIContent.Source source, string tooltip = null)
+    {
+        return new OVRGUIContent(name, source, tooltip);
+    }
 
     public static bool IsMainEditor()
     {

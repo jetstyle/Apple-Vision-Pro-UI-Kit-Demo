@@ -539,7 +539,7 @@ public class OVRPluginUpdater : IOVRPluginInfoSupplier
     }
 
     private static readonly string autoUpdateEnabledKey =
-        "Oculus_Utilities_OVRPluginUpdater_AutoUpdate_" + OVRManager.utilitiesVersion;
+        "Oculus_Utilities_OVRPluginUpdater_AutoUpdate2_" + OVRManager.utilitiesVersion;
 
     private static bool autoUpdateEnabled
     {
@@ -984,7 +984,6 @@ public class OVRPluginUpdater : IOVRPluginInfoSupplier
             else
             {
                 // if there's no current valid version, update it automatically
-                autoUpdateEnabled = false;
                 userAcceptsUpdate = true;
             }
         }
@@ -1052,7 +1051,7 @@ public class OVRPluginUpdater : IOVRPluginInfoSupplier
         }
     }
 
-    #region IOVRPluginInfoSupplier Implementation
+#region IOVRPluginInfoSupplier Implementation
 
     // Test if the OVRPlugin/OpenXR plugin is currently activated, used by other editor utilities
     public bool IsOVRPluginOpenXRActivated() => IsOVRPluginOpenXRActivatedInternal();
@@ -1074,7 +1073,7 @@ public class OVRPluginUpdater : IOVRPluginInfoSupplier
         return enabledUtilsPluginPkg != null && enabledUtilsPluginPkg.IsBundledPluginPackage();
     }
 
-    #endregion
+#endregion
 }
 
 #endif

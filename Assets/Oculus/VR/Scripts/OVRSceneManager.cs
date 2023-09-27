@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -35,7 +35,8 @@ public class OVRSceneManager : MonoBehaviour
     /// A prefab that will be used to instantiate any Plane found
     /// when querying the Scene model. If the anchor contains both
     /// Volume and Plane elements, <see cref="VolumePrefab"/> will
-    /// be used instead.
+    /// be used instead. If null, no object will be instantiated,
+    /// unless a prefab override is provided.
     /// </summary>
     [FormerlySerializedAs("planePrefab")]
     [Tooltip("A prefab that will be used to instantiate any Plane found " +
@@ -46,7 +47,8 @@ public class OVRSceneManager : MonoBehaviour
     /// <summary>
     /// A prefab that will be used to instantiate any Volume found
     /// when querying the Scene model. This anchor may also contain
-    /// Plane elements.
+    /// Plane elements. If null, no object will be instantiated,
+    /// unless a prefab override is provided.
     /// </summary>
     [FormerlySerializedAs("volumePrefab")]
     [Tooltip("A prefab that will be used to instantiate any Volume found " +
@@ -56,6 +58,7 @@ public class OVRSceneManager : MonoBehaviour
 
     /// <summary>
     /// Overrides the instantiation of the generic Plane and Volume prefabs with specialized ones.
+    /// If null is provided, no object will be instantiated for that label.
     /// </summary>
     [FormerlySerializedAs("prefabOverrides")]
     [Tooltip("Overrides the instantiation of the generic Plane/Volume prefabs with specialized ones.")]
@@ -216,7 +219,18 @@ public class OVRSceneManager : MonoBehaviour
         public const string WallArt = "WALL_ART";
 
 
+        /// <summary>
+        /// Represents an <see cref="OVRSceneAnchor"/> that is classified as an invisible wall face.
+        /// All invisible wall faces are also classified as a <see cref="WallFace"/> in order to
+        /// provide backwards compatibility for apps that expect closed rooms to only consist of
+        /// wall faces, instead of a sequence composed of either invisible wall faces or wall faces.
+        /// </summary>
+        public const string InvisibleWallFace = "INVISIBLE_WALL_FACE";
 
+        /// <summary>
+        /// Represents an <see cref="OVRSceneAnchor"/> that is classified as a global mesh.
+        /// </summary>
+        public const string GlobalMesh = "GLOBAL_MESH";
 
         /// <summary>
         /// The list of possible semantic labels.
@@ -241,6 +255,8 @@ public class OVRSceneManager : MonoBehaviour
             Plant,
             Table,
             WallArt,
+            InvisibleWallFace,
+            GlobalMesh,
         };
     }
 
@@ -290,11 +306,16 @@ public class OVRSceneManager : MonoBehaviour
 
     #endregion
 
+    #region Logging
+
     internal struct LogForwarder
     {
-        public void Log(string context, string message) => Debug.Log($"[{context}] {message}");
-        public void LogWarning(string context, string message) => Debug.LogWarning($"[{context}] {message}");
-        public void LogError(string context, string message) => Debug.LogError($"[{context}] {message}");
+        public void Log(string context, string message, GameObject gameObject = null) =>
+            Debug.Log($"[{context}] {message}", gameObject);
+        public void LogWarning(string context, string message, GameObject gameObject = null) =>
+            Debug.LogWarning($"[{context}] {message}", gameObject);
+        public void LogError(string context, string message, GameObject gameObject = null) =>
+            Debug.LogError($"[{context}] {message}", gameObject);
     }
 
     internal LogForwarder? Verbose => VerboseLogging ? new LogForwarder() : (LogForwarder?)null;
@@ -303,16 +324,21 @@ public class OVRSceneManager : MonoBehaviour
     {
         [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
-        public static void Log(string context, string message) => Debug.Log($"[{context}] {message}");
+        public static void Log(string context, string message, GameObject gameObject = null) =>
+            Debug.Log($"[{context}] {message}", gameObject);
 
         [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
-        public static void LogWarning(string context, string message) => Debug.LogWarning($"[{context}] {message}");
+        public static void LogWarning(string context, string message, GameObject gameObject = null) =>
+            Debug.LogWarning($"[{context}] {message}", gameObject);
 
         [Conditional("DEVELOPMENT_BUILD")]
         [Conditional("UNITY_EDITOR")]
-        public static void LogError(string context, string message) => Debug.LogError($"[{context}] {message}");
+        public static void LogError(string context, string message, GameObject gameObject = null) =>
+            Debug.LogError($"[{context}] {message}", gameObject);
     }
+
+    #endregion
 
     void Awake()
     {
@@ -486,22 +512,123 @@ public class OVRSceneManager : MonoBehaviour
     /// <returns>Returns true if scene capture succeeded, otherwise false.</returns>
     public bool RequestSceneCapture(IEnumerable<string> requestedAnchorClassifications)
     {
+        CheckIfClassificationsAreValid(requestedAnchorClassifications);
+        return RequestSceneCapture(String.Join(OVRSemanticClassification.LabelSeparator.ToString(), requestedAnchorClassifications));
+    }
+
+    /// <summary>
+    /// Check if a room setup exists with specified anchors classifications.
+    /// </summary>
+    /// <param name="requestedAnchorClassifications">Anchors classifications to check.</param>
+    /// <returns>OVRTask that gives a boolean answer if the room setup exists upon completion.</returns>
+    public OVRTask<bool> DoesRoomSetupExist(IEnumerable<string> requestedAnchorClassifications)
+    {
+        var task = OVRTask.FromGuid<bool>(Guid.NewGuid());
+        CheckIfClassificationsAreValid(requestedAnchorClassifications);
+        using (new OVRObjectPool.ListScope<OVRAnchor>(out var roomAnchors))
+        {
+            var roomsTask = OVRAnchor.FetchAnchorsAsync<OVRRoomLayout>(roomAnchors);
+            roomsTask.ContinueWith((result, anchors) => CheckClassificationsInRooms(result, anchors, requestedAnchorClassifications, task), roomAnchors);
+        }
+        return task;
+    }
+
+    private static void CheckIfClassificationsAreValid(IEnumerable<string> requestedAnchorClassifications)
+    {
         if (requestedAnchorClassifications == null)
         {
             throw new ArgumentNullException(nameof(requestedAnchorClassifications));
         }
 
-        var anchorClassifications = requestedAnchorClassifications.ToList();
-        foreach (var classification in anchorClassifications)
+        foreach (var classification in requestedAnchorClassifications)
         {
             if (!Classification.List.Contains(classification))
             {
                 throw new ArgumentException(
-                    $"{nameof(requestedAnchorClassifications)} contains invalid anchor {nameof(Classification)} {nameof(classification)}.");
+                    $"{nameof(requestedAnchorClassifications)} contains invalid anchor {nameof(Classification)} {classification}.");
             }
         }
+    }
 
-        return RequestSceneCapture(String.Join(",", anchorClassifications));
+    private static void GetUuidsToQuery(OVRAnchor anchor, HashSet<Guid> uuidsToQuery)
+    {
+        if (anchor.TryGetComponent<OVRAnchorContainer>(out var container))
+        {
+            foreach (var uuid in container.Uuids)
+            {
+                uuidsToQuery.Add(uuid);
+            }
+        }
+    }
+
+    private static void CheckClassificationsInRooms(bool success, List<OVRAnchor> rooms, IEnumerable<string> requestedAnchorClassifications, OVRTask<bool> task)
+    {
+        if (!success)
+        {
+            Development.Log(nameof(OVRSceneManager),
+                $"{nameof(OVRAnchor.FetchAnchorsAsync)} failed on {nameof(DoesRoomSetupExist)}() request to fetch room anchors.");
+            return;
+        }
+
+        using (new OVRObjectPool.HashSetScope<Guid>(out var uuidsToQuery))
+        using (new OVRObjectPool.ListScope<Guid>(out var anchorUuids))
+        {
+            for (int i = 0; i < rooms.Count; i++)
+            {
+                GetUuidsToQuery(rooms[i], uuidsToQuery);
+                anchorUuids.AddRange(uuidsToQuery);
+                uuidsToQuery.Clear();
+            }
+
+            using (new OVRObjectPool.ListScope<OVRAnchor>(out var roomAnchors))
+            {
+                OVRAnchor.FetchAnchorsAsync(anchorUuids, roomAnchors)
+                    .ContinueWith(result => CheckIfAnchorsContainClassifications(result, roomAnchors, requestedAnchorClassifications, task));
+            }
+        }
+    }
+
+    private static void CheckIfAnchorsContainClassifications(bool success, List<OVRAnchor> roomAnchors, IEnumerable<string> requestedAnchorClassifications, OVRTask<bool> task)
+    {
+        if (!success)
+        {
+            Development.Log(nameof(OVRSceneManager),
+                $"{nameof(OVRAnchor.FetchAnchorsAsync)} failed on {nameof(DoesRoomSetupExist)}() request to fetch anchors in rooms.");
+            return;
+        }
+
+        using (new OVRObjectPool.ListScope<string>(out var labels))
+        {
+            CollectLabelsFromAnchors(roomAnchors, labels);
+
+            foreach (var classification in requestedAnchorClassifications)
+            {
+                var labelIndex = labels.IndexOf(classification);
+                if (labelIndex >= 0)
+                {
+                    labels.RemoveAt(labelIndex);
+                }
+                else
+                {
+                    task.SetResult(false);
+                    return;
+                }
+            }
+        }
+        task.SetResult(true);
+    }
+
+    private static void CollectLabelsFromAnchors(List<OVRAnchor> anchors, List<string> labels)
+    {
+        for (int i = 0; i < anchors.Count; i++)
+        {
+            var anchor = anchors[i];
+
+            if (anchor.TryGetComponent<OVRSemanticLabels>(out var classification))
+            {
+                labels.AddRange(classification.Labels.Split(OVRSemanticClassification.LabelSeparator));
+            }
+        }
     }
 
     private static void OnTrackingSpaceChanged(Transform trackingSpace)
@@ -562,12 +689,18 @@ public class OVRSceneManager : MonoBehaviour
     private bool RequestSceneCapture(string requestString)
     {
 #if !UNITY_EDITOR
-        return OVRPlugin.RequestSceneCapture(requestString, out _sceneCaptureRequestId);
-#elif UNITY_EDITOR_WIN
-        Development.LogWarning(nameof(OVRSceneManager),
-            "Scene Capture does not work over Link. Please capture a scene with the HMD in standalone mode, then access the scene model over Link.");
-        return false;
+        bool result = OVRPlugin.RequestSceneCapture(requestString, out _sceneCaptureRequestId);
+        if (!result)
+        {
+            UnexpectedErrorWithSceneCapture?.Invoke();
+        }
+        // When a scene capture has been successfuly requested, silent fall through as it does not imply a successful scene capture
+        return result;
 #else
+        Development.LogWarning(nameof(OVRSceneManager),
+            "Scene Capture does not work over Link.\n"
+            + "Please capture a scene with the HMD in standalone mode, then access the scene model over Link.");
+        UnexpectedErrorWithSceneCapture?.Invoke();
         return false;
 #endif
     }
@@ -660,8 +793,7 @@ public class OVRSceneManager : MonoBehaviour
                 // Search the prefab override for an entry matching the label
                 foreach (var @override in PrefabOverrides)
                 {
-                    if (@override.Prefab &&
-                        @override.ClassificationLabel == label)
+                    if (@override.ClassificationLabel == label)
                     {
                         prefab = @override.Prefab;
                         break;

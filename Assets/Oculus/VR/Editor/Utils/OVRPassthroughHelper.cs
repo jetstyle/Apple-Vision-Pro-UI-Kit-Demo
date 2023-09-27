@@ -75,11 +75,14 @@ internal static class OVRPassthroughHelper
     }
 
     internal static bool HasCentralCamera(OVRCameraRig ovrCameraRig) =>
-        ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() != null;
+        (ovrCameraRig.centerEyeAnchor != null ? ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() : null) != null;
+
+    internal static Camera GetCentralCamera(OVRCameraRig ovrCameraRig) =>
+        ovrCameraRig.centerEyeAnchor != null ? ovrCameraRig.centerEyeAnchor.GetComponent<Camera>() : null;
 
     internal static bool IsBackgroundClear(OVRCameraRig ovrCameraRig)
     {
-        var centerCamera = ovrCameraRig.centerEyeAnchor.GetComponent<Camera>();
+        var centerCamera = GetCentralCamera(ovrCameraRig);
 
         if (centerCamera is null)
         {
@@ -91,7 +94,7 @@ internal static class OVRPassthroughHelper
 
     internal static void ClearBackground(OVRCameraRig ovrCameraRig)
     {
-        var centerCamera = ovrCameraRig.centerEyeAnchor.GetComponent<Camera>();
+        var centerCamera = GetCentralCamera(ovrCameraRig);
 
         if (centerCamera is null)
         {

@@ -159,6 +159,29 @@ public class OVRManifestPreprocessor
         }
     }
 
+    private static void AddReplaceValueTag(XmlDocument doc, string @namespace, string path, string elementName, string name)
+    {
+        XmlElement element = (XmlElement)doc.SelectSingleNode("/manifest");
+        if (element == null)
+        {
+            UnityEngine.Debug.LogError("Could not find manifest tag in android manifest.");
+            return;
+        }
+
+        string toolsNamespace = element.GetAttribute("xmlns:tools");
+        var nodes = doc.SelectNodes(path + "/" + elementName);
+        foreach (XmlElement e in nodes)
+        {
+            if (name == null || name == e.GetAttribute("name", @namespace))
+            {
+                element = e;
+                break;
+            }
+        }
+
+        element.SetAttribute("replace", toolsNamespace, "android:value");
+    }
+
     public static void PatchAndroidManifest(string sourceFile, string destinationFile = null,
         bool skipExistingAttributes = true, bool enableSecurity = false)
     {
@@ -289,7 +312,6 @@ public class OVRManifestPreprocessor
             "com.oculus.permission.HAND_TRACKING",
             handTrackingEntryNeeded,
             modifyIfFound);
-
 
         AddOrRemoveTag(doc,
             androidNamespaceURI,
@@ -544,6 +566,19 @@ public class OVRManifestPreprocessor
                 : modifyIfFound, // If Required, we should override the current entry
             "required", (virtualKeyboardSupport == OVRProjectConfig.FeatureSupport.Required) ? "true" : "false");
 
+        //============================================================================
+        // Scene
+        var sceneSupport = OVRProjectConfig.GetProjectConfig().sceneSupport;
+        bool sceneEntryNeeded = OVRDeviceSelector.isTargetDeviceQuestFamily &&
+                                (sceneSupport != OVRProjectConfig.FeatureSupport.None);
+
+        AddOrRemoveTag(doc,
+            androidNamespaceURI,
+            "/manifest",
+            "uses-permission",
+            OVRPermissionsRequester.GetPermissionId(OVRPermissionsRequester.Permission.Scene),
+            sceneEntryNeeded,
+            modifyIfFound);
     }
 
 
@@ -598,6 +633,13 @@ public class OVRManifestPreprocessor
                 else
                     targetDeviceValue += "|questpro";
             }
+            if (OVRDeviceSelector.isTargetDeviceQuest3)
+            {
+                if (string.IsNullOrEmpty(targetDeviceValue))
+                    targetDeviceValue = "eureka";
+                else
+                    targetDeviceValue += "|eureka";
+            }
             if (string.IsNullOrEmpty(targetDeviceValue))
             {
                 Debug.LogError("Empty target devices");
@@ -611,6 +653,15 @@ public class OVRManifestPreprocessor
                 true,
                 modifyIfFound,
                 "value", targetDeviceValue);
+
+#if XR_MGMT_4_4_0_OR_NEWER && USING_XR_SDK_OPENXR
+            // Fixes a manifest merge edge case where the supported devices tag collides with a cached version when using new XR Management manifest system
+            AddReplaceValueTag(doc,
+                androidNamespaceURI,
+                "/manifest/application",
+                "meta-data",
+                "com.oculus.supportedDevices");
+#endif
         }
     }
 

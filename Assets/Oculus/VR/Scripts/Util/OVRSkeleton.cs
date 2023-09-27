@@ -207,10 +207,11 @@ public class OVRSkeleton : MonoBehaviour
         return _skeletonType;
     }
 
-    internal void SetSkeletonType(SkeletonType type)
+    internal virtual void SetSkeletonType(SkeletonType type)
     {
         _skeletonType = type;
     }
+
 
     public bool IsValidBone(BoneId bone)
     {

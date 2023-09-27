@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) Meta Platforms, Inc. and affiliates.
  * All rights reserved.
  *
@@ -102,7 +102,8 @@ public class OVRVirtualKeyboardSampleInputHandler : MonoBehaviour
 #if UNITY_EDITOR
                 (!OVRVirtualKeyboard.handLeft || !OVRVirtualKeyboard.handLeft.IsTracked)
 #else
-                (!OVRVirtualKeyboard.handLeft || !OVRVirtualKeyboard.handLeft.IsTracked)
+                ((OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandLeft) == OVRInput.ControllerInHandState.NoHand) ||
+                (OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandLeft) == OVRInput.ControllerInHandState.ControllerInHand))
 #endif
                 ? OVRVirtualKeyboard.leftControllerDirectTransform : null;
                 break;
@@ -111,7 +112,8 @@ public class OVRVirtualKeyboardSampleInputHandler : MonoBehaviour
 #if UNITY_EDITOR
                  (!OVRVirtualKeyboard.handRight || !OVRVirtualKeyboard.handRight.IsTracked)
 #else
-                (!OVRVirtualKeyboard.handRight || !OVRVirtualKeyboard.handRight.IsTracked)
+                ((OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandRight) == OVRInput.ControllerInHandState.NoHand) ||
+                (OVRInput.GetControllerIsInHandState(OVRInput.Hand.HandRight) == OVRInput.ControllerInHandState.ControllerInHand))
 #endif
                 ? OVRVirtualKeyboard.rightControllerDirectTransform : null;
 
@@ -187,11 +189,11 @@ public class OVRVirtualKeyboardSampleInputHandler : MonoBehaviour
         OVRInput.Controller activeController = OVRInput.Controller.None;
 
         var leftControllerExists = OVRVirtualKeyboard.leftControllerRootTransform != null;
-        var leftControllerActive = leftControllerExists && OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger);
+        var leftControllerActive = leftControllerExists && OVRInput.GetDown(OVRInput.RawButton.LIndexTrigger);
         activeController = (leftControllerActive) ? OVRInput.Controller.LTouch : activeController;
 
         var rightControllerExists = OVRVirtualKeyboard.rightControllerRootTransform != null;
-        var rightControllerActive = rightControllerExists && OVRInput.GetDown(OVRInput.Button.SecondaryIndexTrigger);
+        var rightControllerActive = rightControllerExists && OVRInput.GetDown(OVRInput.RawButton.RIndexTrigger);
         activeController = (rightControllerActive) ? OVRInput.Controller.RTouch : activeController;
 
         var handLeftExists = OVRVirtualKeyboard.handLeft != null;

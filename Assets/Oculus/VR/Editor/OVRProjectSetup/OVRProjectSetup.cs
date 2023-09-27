@@ -73,12 +73,6 @@ public static class OVRProjectSetup
     private static readonly HashSet<BuildTargetGroup> SupportedPlatforms = new HashSet<BuildTargetGroup>
         { BuildTargetGroup.Android, BuildTargetGroup.Standalone };
 
-    internal const string StatusIconPath =
-        "Assets/Oculus/VR/Editor/OculusInternal/OVRSmartBuildingBlocks/Icons/ovr_icon_upst.png";
-
-
-
-
 
     static OVRProjectSetup()
     {

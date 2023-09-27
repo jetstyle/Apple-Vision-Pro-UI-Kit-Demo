@@ -1,0 +1,82 @@
+{
+    "name": "Vision UI Controls",
+    "maps": [
+        {
+            "name": "Hands",
+            "id": "c6dc7150-563d-44fb-8acf-c62ced9b290e",
+            "actions": [
+                {
+                    "name": "indexPressed",
+                    "type": "Button",
+                    "id": "99b2baeb-d0be-4369-ba1e-bd79c5ac52bc",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "pinchStrengthIndex",
+                    "type": "Value",
+                    "id": "81f83f59-6088-4b45-815e-ba1e07fc69db",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "13511164-3362-425b-bbfc-3d7eb8437a38",
+                    "path": "<MetaAimHand>/indexPressed",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "indexPressed",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "fd6f4c18-765c-4508-8d8b-0c3754ffe4cb",
+                    "path": "<MetaAimHand>/pinchStrengthIndex",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "pinchStrengthIndex",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Controllers",
+            "id": "da35c677-f624-484b-95b1-d47129ec2157",
+            "actions": [
+                {
+                    "name": "trackingState",
+                    "type": "Value",
+                    "id": "058872fe-aa27-487c-9e82-c9e78efd61e8",
+                    "expectedControlType": "Integer",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "b0b18aa1-42c9-4bc1-91d7-0074985e5005",
+                    "path": "<XRController>/trackingState",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "trackingState",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

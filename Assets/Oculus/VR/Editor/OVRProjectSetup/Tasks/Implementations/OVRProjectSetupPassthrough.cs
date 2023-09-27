@@ -57,7 +57,7 @@ internal static class OVRProjectSetupPassthrough
                 var ovrManager = OVRProjectSetupUtils.FindComponentInScene<OVRManager>();
                 return ovrManager == null || ovrManager.isInsightPassthroughEnabled;
             },
-            message: $"When using Passthrough in your project it's required to enable it in the {nameof(OVRManager)}",
+            message: $"When using Passthrough in your project it's required to enable it in {nameof(OVRManager)}",
             fix: buildTargetGroup =>
             {
                 var ovrManager = OVRProjectSetupUtils.FindComponentInScene<OVRManager>();
@@ -85,6 +85,7 @@ internal static class OVRProjectSetupPassthrough
             {
                 var ovrCameraRig = OVRProjectSetupUtils.FindComponentInScene<OVRCameraRig>();
                 return ovrCameraRig != null &&
+                       OVRPassthroughHelper.HasCentralCamera(ovrCameraRig) &&
                        OVRPassthroughHelper.IsBackgroundClear(ovrCameraRig);
             },
             conditionalValidity: _ =>
@@ -94,12 +95,11 @@ internal static class OVRProjectSetupPassthrough
                        OVRPassthroughHelper.HasCentralCamera(ovrCameraRig) &&
                        OVRPassthroughHelper.IsAnyPassthroughLayerUnderlay();
             },
-            message: "When using Passthrough layer in your project it's required to " +
-                     "make clear background",
+            message: "When using Passthrough as an underlay it's required set the camera background to transparent",
             fix: _ =>
             {
                 var ovrCameraRig = OVRProjectSetupUtils.FindComponentInScene<OVRCameraRig>();
-                if (ovrCameraRig != null)
+                if (ovrCameraRig != null && OVRPassthroughHelper.HasCentralCamera(ovrCameraRig))
                 {
                     OVRPassthroughHelper.ClearBackground(ovrCameraRig);
                 }

@@ -90,6 +90,12 @@ public class OVRRuntimeSettings : ScriptableObject
             return;
         }
 
+        if (!hasSetTelemetryEnabled)
+        {
+            return;
+        }
+
+
         // Send Consent Event
         new OVRTelemetryMarker(
                 OVRTelemetry.ActiveClient,

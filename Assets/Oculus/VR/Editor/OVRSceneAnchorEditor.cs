@@ -39,6 +39,7 @@ public class OVRSceneAnchorEditor : Editor
         using (new EditorGUI.DisabledScope(true))
         {
             EditorGUILayout.ObjectField("Script", _script, GetType(), false);
+            EditorGUILayout.TextField(nameof(_object.Uuid), _object.Uuid.ToString());
             EditorGUILayout.Toggle(nameof(_object.IsTracked), _object.IsTracked);
         }
 

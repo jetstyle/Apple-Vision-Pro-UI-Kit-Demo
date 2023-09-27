@@ -206,8 +206,12 @@ public class OVROverlayEditor : Editor
         bool tmpEnableDepthBufferTest = !_propNoDepthBufferTesting.boolValue;
 
         EditorGUILayout.LabelField("Display Order", EditorStyles.boldLabel);
+
+        GUI.enabled = Application.isEditor && !Application.isPlaying;
         EditorGUILayout.PropertyField(_propCurrentOverlayType,
             new GUIContent("Overlay Type", "Whether this overlay should layer behind the scene or in front of it"));
+        GUI.enabled = true;
+
         EditorGUILayout.PropertyField(_propCompositionDepth, new GUIContent("Composition Depth",
             "Depth value used to sort OVROverlays in the scene, smaller value appears in front"));
         tmpEnableDepthBufferTest = EditorGUILayout.Toggle(new GUIContent("Enable Depth Buffer Testing",

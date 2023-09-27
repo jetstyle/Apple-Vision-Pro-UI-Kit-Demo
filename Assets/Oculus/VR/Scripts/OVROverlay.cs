@@ -576,8 +576,8 @@ public class OVROverlay : MonoBehaviour
                 {
 #if UNITY_EDITOR
                     var assetPath = UnityEditor.AssetDatabase.GetAssetPath(textures[i]);
-                    var importer = (UnityEditor.TextureImporter)UnityEditor.TextureImporter.GetAtPath(assetPath);
-                    if (importer && importer.textureType != UnityEditor.TextureImporterType.Default)
+                    var importer = UnityEditor.AssetImporter.GetAtPath(assetPath) as UnityEditor.TextureImporter;
+                    if (importer != null && importer.textureType != UnityEditor.TextureImporterType.Default)
                     {
                         Debug.LogError("Need Default Texture Type for overlay");
                         return false;
@@ -867,15 +867,17 @@ public class OVROverlay : MonoBehaviour
         bool internalUseEfficientSupersample = useEfficientSupersample;
 
         // No sharpening or supersampling method was selected, defaulting to efficient supersampling and efficient sharpening.
-        if(useAutomaticFiltering && !(useEfficientSharpen || useEfficientSupersample ||useExpensiveSharpen || useExpensiveSuperSample)){
+        if (useAutomaticFiltering && !(useEfficientSharpen || useEfficientSupersample || useExpensiveSharpen || useExpensiveSuperSample))
+        {
             internalUseEfficientSharpen = true;
             internalUseEfficientSupersample = true;
         }
 
-        if(!useAutomaticFiltering && ((useEfficientSharpen && useEfficientSupersample)
+        if (!useAutomaticFiltering && ((useEfficientSharpen && useEfficientSupersample)
            || (useExpensiveSharpen && useExpensiveSuperSample)
            || (useEfficientSharpen && useExpensiveSuperSample)
-           || (useExpensiveSharpen && useEfficientSupersample))){
+           || (useExpensiveSharpen && useEfficientSupersample)))
+        {
 
             Debug.LogError("Warning-XR sharpening and supersampling cannot be enabled simultaneously, either enable autofiltering or disable one of the options");
             return false;

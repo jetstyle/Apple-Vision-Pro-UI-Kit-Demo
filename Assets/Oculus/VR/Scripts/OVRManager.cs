@@ -130,7 +130,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         Oculus_Quest = OVRPlugin.SystemHeadset.Oculus_Quest,
         Oculus_Quest_2 = OVRPlugin.SystemHeadset.Oculus_Quest_2,
         Meta_Quest_Pro = OVRPlugin.SystemHeadset.Meta_Quest_Pro,
-        Placeholder_11 = OVRPlugin.SystemHeadset.Placeholder_11,
+        Meta_Quest_3 = OVRPlugin.SystemHeadset.Meta_Quest_3,
         Placeholder_12 = OVRPlugin.SystemHeadset.Placeholder_12,
         Placeholder_13 = OVRPlugin.SystemHeadset.Placeholder_13,
         Placeholder_14 = OVRPlugin.SystemHeadset.Placeholder_14,
@@ -144,7 +144,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         Oculus_Link_Quest = OVRPlugin.SystemHeadset.Oculus_Link_Quest,
         Oculus_Link_Quest_2 = OVRPlugin.SystemHeadset.Oculus_Link_Quest_2,
         Meta_Link_Quest_Pro = OVRPlugin.SystemHeadset.Meta_Link_Quest_Pro,
-        PC_Placeholder_4104 = OVRPlugin.SystemHeadset.PC_Placeholder_4104,
+        Meta_Link_Quest_3 = OVRPlugin.SystemHeadset.Meta_Link_Quest_3,
         PC_Placeholder_4105 = OVRPlugin.SystemHeadset.PC_Placeholder_4105,
         PC_Placeholder_4106 = OVRPlugin.SystemHeadset.PC_Placeholder_4106,
         PC_Placeholder_4107 = OVRPlugin.SystemHeadset.PC_Placeholder_4107
@@ -183,6 +183,12 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
     }
 
 
+    public enum ControllerDrivenHandPosesType
+    {
+        None,
+        ConformingToController,
+        Natural,
+    }
 
     public interface EventListener
     {
@@ -1138,6 +1144,11 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
 
 #endif
 
+    /// <summary>
+    /// Specify if concurrent hands and controllers should be enabled.
+    /// </summary>
+    [HideInInspector, Tooltip("Specify if Concurrent Hands and Controllers should be enabled. ")]
+    public bool launchMultimodalHandsControllersOnStartup = false;
 
     /// <summary>
     /// Specify if Insight Passthrough should be enabled.
@@ -1167,6 +1178,12 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
     /// </summary>
     [SerializeField, HideInInspector]
     internal bool requestEyeTrackingPermissionOnStartup;
+
+    /// <summary>
+    /// Specify if the app will request scene permission on startup.
+    /// </summary>
+    [SerializeField, HideInInspector]
+    internal bool requestScenePermissionOnStartup;
 
     #endregion
 
@@ -1655,7 +1672,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         return m_SpaceWarpEnabled;
     }
 
-#if OCULUS_XR_DYNAMIC_DEPTH_RESOLVE
+#if OCULUS_XR_3_3_0_OR_NEWER
     public static bool SetDepthSubmission(bool enable)
     {
 #if USING_XR_SDK_OCULUS
@@ -1796,7 +1813,16 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
     public bool LateLatching = false;
 #endif
 
+    [SerializeField]
+    [HideInInspector]
+    private OVRManager.ControllerDrivenHandPosesType _readOnlyControllerDrivenHandPosesType = OVRManager.ControllerDrivenHandPosesType.None;
+    [Tooltip("Defines if hand poses can be populated by controller data.")]
+    public OVRManager.ControllerDrivenHandPosesType controllerDrivenHandPosesType = OVRManager.ControllerDrivenHandPosesType.None;
 
+    public bool IsSimultaneousHandsAndControllersSupported
+    {
+        get => (_readOnlyControllerDrivenHandPosesType != OVRManager.ControllerDrivenHandPosesType.None) || launchMultimodalHandsControllersOnStartup;
+    }
 
     /// <summary>
     /// True if the current platform supports virtual reality.
@@ -2152,6 +2178,14 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         OVRPlugin.occlusionMesh = true;
 #endif
 
+        if (launchMultimodalHandsControllersOnStartup)
+        {
+            // Inform the plugin that multimodal mode is enabled
+            if (!OVRPlugin.SetSimultaneousHandsAndControllersEnabled(true))
+            {
+                Debug.Log("Failed to set multimodal hands and controllers mode!");
+            }
+        }
 
         if (isInsightPassthroughEnabled)
         {
@@ -2197,6 +2231,11 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         if (requestEyeTrackingPermissionOnStartup)
         {
             permissions.Add(OVRPermissionsRequester.Permission.EyeTracking);
+        }
+
+        if (requestScenePermissionOnStartup)
+        {
+            permissions.Add(OVRPermissionsRequester.Permission.Scene);
         }
 
         OVRPermissionsRequester.Request(permissions);
@@ -2322,17 +2361,17 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         }
 #endif
 
-#if !OCULUS_XR_VULKAN_DYNAMIC_RESOLUTION || UNITY_2020
+#if !OCULUS_XR_3_3_0_OR_NEWER || UNITY_2020
         if (enableDynamicResolution && SystemInfo.graphicsDeviceType == GraphicsDeviceType.Vulkan)
         {
-            Debug.LogError("Vulkan Dynamic Resolution is not supported on your current build version. Ensure you are on Unity 2021 + with Oculus XR plugin v3.3.0+");
+            Debug.LogError("Vulkan Dynamic Resolution is not supported on your current build version. Ensure you are on Unity 2021+ with Oculus XR plugin v3.3.0+");
             enableDynamicResolution = false;
         }
 #endif
 
 
 #if UNITY_EDITOR
-            if (_scriptsReloaded)
+        if (_scriptsReloaded)
         {
             _scriptsReloaded = false;
             instance = this;
@@ -2640,6 +2679,25 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
         }
 #endif
 
+        if (_readOnlyControllerDrivenHandPosesType != controllerDrivenHandPosesType)
+        {
+            _readOnlyControllerDrivenHandPosesType = controllerDrivenHandPosesType;
+            switch (_readOnlyControllerDrivenHandPosesType)
+            {
+                case OVRManager.ControllerDrivenHandPosesType.None:
+                    OVRPlugin.SetControllerDrivenHandPoses(false);
+                    OVRPlugin.SetControllerDrivenHandPosesAreNatural(false);
+                    break;
+                case OVRManager.ControllerDrivenHandPosesType.ConformingToController:
+                    OVRPlugin.SetControllerDrivenHandPoses(true);
+                    OVRPlugin.SetControllerDrivenHandPosesAreNatural(false);
+                    break;
+                case OVRManager.ControllerDrivenHandPosesType.Natural:
+                    OVRPlugin.SetControllerDrivenHandPoses(true);
+                    OVRPlugin.SetControllerDrivenHandPosesAreNatural(true);
+                    break;
+            }
+        }
 
         OVRInput.Update();
 
@@ -2678,7 +2736,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
                         data.Result >= 0 ? new OVRAnchor(data.Space, data.Uuid) : OVRAnchor.Null);
                     SpatialAnchorCreateComplete?.Invoke(data.RequestId, data.Result >= 0, data.Space, data.Uuid);
                 }
-                    break;
+                break;
                 case OVRPlugin.EventType.SpaceSetComponentStatusComplete:
                 {
                     var data = OVRDeserialize
@@ -2697,7 +2755,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
 
                     OVRTask.GetExisting<bool>(data.RequestId).SetResult(data.Result >= 0);
                 }
-                    break;
+                break;
                 case OVRPlugin.EventType.SpaceQueryResults:
                     if (SpaceQueryResults != null)
                     {
@@ -2715,7 +2773,7 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
                     SpaceQueryComplete?.Invoke(data.RequestId, data.Result >= 0);
                     OVRAnchor.OnSpaceQueryCompleteData(data);
                 }
-                    break;
+                break;
                 case OVRPlugin.EventType.SpaceSaveComplete:
                     if (SpaceSaveComplete != null)
                     {
@@ -3194,6 +3252,14 @@ public class OVRManager : MonoBehaviour, OVRMixedRealityCaptureConfiguration
 
     private static PassthroughCapabilities _passthroughCapabilities;
 
+    /// <summary>
+    /// Checks whether concurrent hands and controllers is currently supported by the system.
+    /// This method should only be called when the XR Plug-in is initialized.
+    /// </summary>
+    public static bool IsMultimodalHandsControllersSupported()
+    {
+        return OVRPlugin.IsMultimodalHandsControllersSupported();
+    }
 
     /// <summary>
     /// Checks whether Passthrough is supported by the system. This method should only be called when the XR Plug-in is initialized.

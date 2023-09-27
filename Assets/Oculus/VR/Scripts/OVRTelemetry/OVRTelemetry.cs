@@ -18,6 +18,10 @@
  * limitations under the License.
  */
 
+#if !(UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN || (UNITY_ANDROID && !UNITY_EDITOR))
+#define OVRPLUGIN_UNSUPPORTED_PLATFORM
+#endif
+
 using System;
 using UnityEngine;
 
