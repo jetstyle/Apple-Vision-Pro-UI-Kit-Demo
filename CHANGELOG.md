@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 <!-- Headers should be listed in this order: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
+## [1.2.0] - 2024-01-26
+Added:
+- Resizers for all demo windows
+
+Changed:
+- Replaced fonts, from "SF Pro Display" to "Inter" family
+- Select action now works when the trigger button is pressed on XR controllers
+
 ## [1.1.0] - 2023-09-27
 Added:
 - Support for hand-tracking + eye-tracking mode when controllers are not present in hands
